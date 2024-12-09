@@ -5,6 +5,7 @@ import {
 	FlatList,
 	TextInput,
 	TouchableOpacity,
+	Alert,
 } from "react-native";
 import { saveTasks, loadTasks } from "../lib/utils/storage";
 import TaskItem from "./TaskItem";
@@ -21,6 +22,7 @@ const TaskList: React.FC = () => {
 	const [filterOption, setFilterOption] = useState<
 		"all" | "completed" | "incomplete"
 	>("all");
+	const [isCollapsed, setIsCollapsed] = useState(false);
 
 	useEffect(() => {
 		// Load tasks from storage on component mount
@@ -81,38 +83,27 @@ const TaskList: React.FC = () => {
 		setTasks(tasks.filter((task) => task.id !== id));
 	};
 
+	const confirmClearAllTasks = () => {
+		Alert.alert(
+			"Confirm",
+			"Are you sure you want to clear all tasks?",
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "OK",
+					style: "destructive",
+					onPress: () => setTasks([]),
+				},
+			],
+			{ cancelable: false }
+		);
+	};
+
 	return (
 		<View className="flex-1 p-4 bg-gray-100">
-			{/* Sorting and Filtering Controls */}
-			<View className=" flex-column justify-between mb-4 bg-white shadow p-4 rounded-lg gap-4">
-				<View className="flex-auto bg-gray-100 rounded-lg p-4">
-					<Text className="font-semibold">Sort By:</Text>
-					<Picker
-						selectedValue={sortOption}
-						onValueChange={(itemValue: string) =>
-							setSortOption(itemValue as SortOption)
-						}
-					>
-						<Picker.Item label="Newest" value="newest" />
-						<Picker.Item label="Oldest" value="oldest" />
-					</Picker>
-				</View>
-
-				<View className="flex-auto bg-gray-100 rounded-lg p-4">
-					<Text className="font-semibold">Filter:</Text>
-					<Picker
-						selectedValue={filterOption}
-						onValueChange={(itemValue) =>
-							setFilterOption(itemValue)
-						}
-					>
-						<Picker.Item label="All" value="all" />
-						<Picker.Item label="Completed" value="completed" />
-						<Picker.Item label="Incomplete" value="incomplete" />
-					</Picker>
-				</View>
-			</View>
-
 			{/* Input */}
 			<View className="bg-white p-4 rounded-lg mb-4">
 				<TextInput
@@ -132,11 +123,21 @@ const TaskList: React.FC = () => {
 						}
 						event.nativeEvent.text = "";
 					}}
+					maxLength={50}
 				/>
 			</View>
 
-			<View className="flex-row items-center justify-end mb-4 p-2">
-				<TouchableOpacity onPress={() => setTasks([])}>
+			<View className="flex-row items-center justify-between mb-4 p-2 gap-2">
+				<TouchableOpacity onPress={() => setIsCollapsed(!isCollapsed)}>
+					<Text className="text-blue-500">
+						{isCollapsed ? "Show" : "Hide"} Filters
+					</Text>
+				</TouchableOpacity>
+				<TouchableOpacity
+					onPress={() => {
+						confirmClearAllTasks();
+					}}
+				>
 					<Text className="text-red-500">Clear All</Text>
 				</TouchableOpacity>
 			</View>
