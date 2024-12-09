@@ -12,6 +12,7 @@ import TaskItem from "./TaskItem";
 import { Task } from "@/lib/types";
 import { Picker } from "@react-native-picker/picker";
 import { generateUId } from "@/lib/utils/id-generator";
+import { LinearGradient } from "expo-linear-gradient";
 
 type SortOption = "newest" | "oldest";
 
@@ -22,7 +23,7 @@ const TaskList: React.FC = () => {
 	const [filterOption, setFilterOption] = useState<
 		"all" | "completed" | "incomplete"
 	>("all");
-	const [isCollapsed, setIsCollapsed] = useState(false);
+	const [isCollapsed, setIsCollapsed] = useState(true);
 
 	useEffect(() => {
 		// Load tasks from storage on component mount
@@ -37,38 +38,36 @@ const TaskList: React.FC = () => {
 		// Save tasks whenever they change
 		saveTasks(tasks);
 
-		if (tasks.length !== 0) {
-			// Apply filtering and sorting
-			let result = [...tasks];
+		// Apply filtering and sorting
+		let result = [...tasks];
 
-			// Filter
-			if (filterOption === "completed") {
-				result = result.filter((task) => task.completed);
-			} else if (filterOption === "incomplete") {
-				result = result.filter((task) => !task.completed);
-			}
-
-			result = result.map((task) => ({
-				...task,
-				createdAt: new Date(task.createdAt),
-			}));
-
-			// Sort
-			switch (sortOption) {
-				case "newest":
-					result.sort(
-						(a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-					);
-					break;
-				case "oldest":
-					result.sort(
-						(a, b) => a.createdAt.getTime() - b.createdAt.getTime()
-					);
-					break;
-			}
-
-			setFilteredTasks(result);
+		// Filter
+		if (filterOption === "completed") {
+			result = result.filter((task) => task.completed);
+		} else if (filterOption === "incomplete") {
+			result = result.filter((task) => !task.completed);
 		}
+
+		result = result.map((task) => ({
+			...task,
+			createdAt: new Date(task.createdAt),
+		}));
+
+		// Sort
+		switch (sortOption) {
+			case "newest":
+				result.sort(
+					(a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+				);
+				break;
+			case "oldest":
+				result.sort(
+					(a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+				);
+				break;
+		}
+
+		setFilteredTasks(result);
 	}, [tasks, sortOption, filterOption]);
 
 	const toggleTaskCompletion = (id: string) => {
@@ -91,9 +90,10 @@ const TaskList: React.FC = () => {
 				{
 					text: "Cancel",
 					style: "cancel",
+					isPreferred: true,
 				},
 				{
-					text: "OK",
+					text: "Clear all",
 					style: "destructive",
 					onPress: () => setTasks([]),
 				},
@@ -103,9 +103,9 @@ const TaskList: React.FC = () => {
 	};
 
 	return (
-		<View className="flex-1 p-4 bg-gray-100">
+		<View className="flex-1 p-4 bg-white">
 			{/* Input */}
-			<View className="bg-white p-4 rounded-lg mb-4">
+			<View className="bg-secondary/20 p-3 rounded-2xl border border-primary/50 mb-4">
 				<TextInput
 					placeholder="Add a task..."
 					onSubmitEditing={(event) => {
@@ -118,19 +118,20 @@ const TaskList: React.FC = () => {
 									title,
 									completed: false,
 									createdAt: new Date(),
-								},
+								} as Task,
 							]);
 						}
 						event.nativeEvent.text = "";
+						(event.target as TextInput).clear();
 					}}
-					maxLength={50}
+					maxLength={45}
 				/>
 			</View>
 
 			<View className="flex-row items-center justify-between mb-4 p-2 gap-2">
 				<TouchableOpacity onPress={() => setIsCollapsed(!isCollapsed)}>
-					<Text className="text-blue-500">
-						{isCollapsed ? "Show" : "Hide"} Filters
+					<Text className="text-primary">
+						{isCollapsed ? "Show" : "Hide"} Sort/Filters
 					</Text>
 				</TouchableOpacity>
 				<TouchableOpacity
@@ -141,6 +142,92 @@ const TaskList: React.FC = () => {
 					<Text className="text-red-500">Clear All</Text>
 				</TouchableOpacity>
 			</View>
+
+			{/* Sorting and Filtering Controls */}
+
+			{!isCollapsed && (
+				<LinearGradient
+					colors={["#b802fb", "#45caff"]}
+					start={[0, 1]}
+					end={[1, 0]}
+					className="p-4 mb-2"
+					style={{ borderRadius: 20 }}
+				>
+					<View className="flex-column justify-between mb-4 rounded-xl gap-4">
+						<View>
+							<Text className="text-white mb-1">Sort by:</Text>
+							
+						<View className="overflow-hidden rounded-xl">
+						<Picker
+							placeholder="Sort"
+							selectedValue={sortOption}
+							onValueChange={(itemValue: string) =>
+								setSortOption(itemValue as SortOption)
+							}
+							style={{
+								color: "white",
+								backgroundColor: "#ffffff50",
+							}}
+						>
+							<Picker.Item
+								label="Newest"
+								value="newest"
+								style={{
+									color: "#b802fb",
+								}}
+							/>
+							<Picker.Item
+								label="Oldest"
+								value="oldest"
+								style={{
+									color: "#b802fb",
+								}}
+							/>
+						</Picker>
+						</View>
+						</View>
+
+						<View>
+							<Text className="text-white mb-1">Filter:</Text>
+						<View className="overflow-hidden rounded-xl">
+						<Picker
+							placeholder="Filter"
+							selectedValue={filterOption}
+							onValueChange={(itemValue) =>
+								setFilterOption(itemValue)
+							}
+							style={{
+								color: "white",
+								backgroundColor: "#ffffff50",
+							}}
+						>
+							<Picker.Item
+								label="All"
+								value="all"
+								style={{
+									color: "#b802fb",
+								}}
+							/>
+							<Picker.Item
+								label="Completed"
+								value="completed"
+								style={{
+									color: "#b802fb",
+								}}
+							/>
+							<Picker.Item
+								label="Incomplete"
+								value="incomplete"
+								style={{
+									color: "#b802fb",
+								}}
+							/>
+						</Picker>
+						</View>
+						</View>
+					</View>
+				</LinearGradient>
+			)}
 
 			<FlatList
 				data={filteredTasks}
@@ -160,6 +247,9 @@ const TaskList: React.FC = () => {
 					</View>
 				)}
 			/>
+			<Text className="text-base text-center text-primary opacity-80">
+				Developed by Thabani Dev
+			</Text>
 		</View>
 	);
 };
